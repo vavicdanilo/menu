@@ -1,356 +1,718 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html lang="me">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Slot Igrica</title>
-    <style>
-        body {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            background-color: #f0f0f0;
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-        }
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Restoran | Meni (Flipbook)</title>
+  <meta name="description" content="Moderan restoranski meni na engleskom i crnogorskom, sa flipbook animacijom." />
 
-        .slot-machine {
-            text-align: center;
-            background-color: #fff;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            width: 90%;
-            max-width: 400px;
-        }
-   .slot-machine h1 {
-            margin-bottom: 20px;
-            font-size: 2em;
-            color: #333;
-        }
-        .reels {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            margin-bottom: 20px;
-        }
+  <style>
+    :root{
+      /* Elegant black & gold palette */
+      --bg: #050505;
+      --bg2: #0b0b0b;
 
-        .reel-row {
-            display: flex;
-            justify-content: center;
-            margin: 5px 0;
-        }
+      --paper: #121212;
+      --paper-soft: #161616;
 
-        .reel {
-            font-size: 2em;
-            margin: 0 5px;
-            width: 50px;
-            height: 50px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background-color: #eee;
-            border-radius: 5px;
-        }
+      --card: rgba(255,255,255,.05);
+      --card2: rgba(255,255,255,.08);
 
-        .controls {
-            margin-bottom: 20px;
-        }
+      --text: rgba(255,255,255,.95);
+      --muted: rgba(255,255,255,.65);
+      --line: rgba(255,255,255,.14);
 
-        #bet-amount {
-            padding: 10px;
-            font-size: 1em;
-            width: calc(100% - 100px);
-            max-width: 200px;
-        }
+      --accent: #f2c14e;      /* elegant gold */
+      --accent-soft: #f7d87c;
 
-        #spin-button, #gamble-button, #choose-red, #choose-black, #take-money {
-            padding: 10px 20px;
-            font-size: 1em;
-            cursor: pointer;
-            margin: 5px;
-            width: calc(50% - 20px);
-            max-width: 100px;
-        }
+      --shadow: 0 30px 80px rgba(0,0,0,.75);
 
-        #result, #balance {
-            margin-top: 20px;
-            font-size: 1.2em;
-        }
+      --radius: 24px;
+      --page-radius: 20px;
 
-        #gamble-button, #choose-red, #choose-black, #take-money {
-            display: none;  /* Initial hidden state */
-        }
+      --book-w: min(980px, 94vw);
+      --book-h: min(640px, 78vh);
 
-        .reel img {
-            width: 50px;
-            height: 50px;
-            border-radius: 5px;
-        }
+      --flip-dur: 650ms;
 
-        .cards {
-            display: flex;
-            justify-content: center;
-            margin-top: 20px;
-        }
+      --font: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+    }
 
-        .card {
-            width: 40px;
-            height: 60px;
-            background-color: #fff;
-            border: 1px solid #000;
-            border-radius: 5px;
-            margin: 0 5px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 1.5em;
-        }
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
 
-        .card.red {
-            color: red;
-        }
+    body{
+      margin:0;
+      font-family: var(--font);
+      color: var(--text);
+      background:
+        radial-gradient(900px 520px at 20% 10%, rgba(242,193,78,.12), transparent 60%),
+        radial-gradient(900px 520px at 80% 20%, rgba(242,193,78,.06), transparent 65%),
+        linear-gradient(180deg, var(--bg), var(--bg2));
+      overflow-x:hidden;
+    }
 
-        .card.black {
-            color: black;
-        }
+    .wrap{
+      min-height:100%;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      padding: 28px 18px 34px;
+      gap: 18px;
+    }
 
-        @media (max-width: 600px) {
-            .reel {
-                font-size: 1.5em;
-                width: 40px;
-                height: 40px;
-            }
+    header{
+      width: var(--book-w);
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap: 14px;
+    }
 
-            #bet-amount, #spin-button, #gamble-button, #choose-red, #choose-black, #take-money {
-                width: 100%;
-                max-width: none;
-                margin: 10px 0;
-            }
+    .brand{
+      display:flex;
+      flex-direction:column;
+      gap: 6px;
+    }
 
-            .card {
-                width: 30px;
-                height: 50px;
-                font-size: 1em;
-            }
-        }
-    </style>
+    .brand h1{
+      margin:0;
+      font-size: clamp(22px, 2.8vw, 34px);
+      letter-spacing: .2px;
+      line-height:1.08;
+    }
+
+    .brand p{
+      margin:0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .controls{
+      display:flex;
+      flex-wrap:wrap;
+      gap: 10px;
+      justify-content:flex-end;
+      align-items:center;
+    }
+
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      box-shadow: 0 10px 34px rgba(0,0,0,.45);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      user-select:none;
+    }
+
+    .toggle{
+      display:flex;
+      align-items:center;
+      gap: 10px;
+    }
+
+    .seg{
+      display:flex;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      overflow:hidden;
+      background: rgba(255,255,255,.03);
+    }
+
+    .seg button{
+      border:0;
+      background: transparent;
+      color: var(--muted);
+      padding: 9px 12px;
+      cursor:pointer;
+      font-weight:800;
+      letter-spacing:.25px;
+    }
+
+    .seg button.active{
+      color: rgba(255,255,255,.96);
+      background: linear-gradient(180deg, rgba(242,193,78,.22), rgba(242,193,78,.10));
+    }
+
+    .status{
+      color: var(--muted);
+      font-size: 12px;
+      font-weight:800;
+      letter-spacing:.25px;
+      padding: 10px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.03);
+      white-space:nowrap;
+    }
+
+    /* Book */
+    .stage{
+      perspective: 1800px;
+      width: var(--book-w);
+      height: var(--book-h);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      position:relative;
+    }
+
+    .book{
+      width: 100%;
+      height: 100%;
+      position:relative;
+      transform-style: preserve-3d;
+      border-radius: var(--radius);
+      background:
+        radial-gradient(900px 520px at 20% 0%, rgba(242,193,78,.10), transparent 60%),
+        linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+      border: 1px solid rgba(255,255,255,.14);
+      overflow: hidden;
+      box-shadow: var(--shadow);
+    }
+
+    .spineGlow{
+      position:absolute;
+      left: 50%;
+      top: 0;
+      width: 2px;
+      height: 100%;
+      transform: translateX(-50%);
+      background: linear-gradient(180deg, transparent, rgba(242,193,78,.45), transparent);
+      opacity:.70;
+      pointer-events:none;
+    }
+
+    .page{
+      position:absolute;
+      inset: 14px;
+      border-radius: var(--page-radius);
+      transform-style: preserve-3d;
+      transform-origin: left center;
+      transition: transform var(--flip-dur) cubic-bezier(.2,.8,.2,1);
+      will-change: transform;
+    }
+
+    .page .front,
+    .page .back{
+      position:absolute;
+      inset:0;
+      border-radius: var(--page-radius);
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+      overflow:hidden;
+      border: 1px solid rgba(255,255,255,.12);
+
+      /* Opaque paper (prevents see-through) */
+      background: linear-gradient(180deg, var(--paper), var(--paper-soft));
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.05),
+        inset 0 -20px 40px rgba(0,0,0,.45);
+    }
+
+    .page .back{
+      transform: rotateY(180deg);
+    }
+
+    /* Subtle paper grain */
+    .grain{
+      position:absolute;
+      inset:0;
+      opacity:.06;
+      pointer-events:none;
+      background-image:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='260'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='260' height='260' filter='url(%23n)' opacity='.45'/%3E%3C/svg%3E");
+      mix-blend-mode: soft-light;
+      z-index: 0;
+    }
+
+    /* Page stacking */
+    .page{ z-index: 10; }
+    .page[data-index="0"]{ z-index: 20; }
+    .page[data-index="1"]{ z-index: 19; }
+    .page[data-index="2"]{ z-index: 18; }
+    .page[data-index="3"]{ z-index: 17; }
+    .page[data-index="4"]{ z-index: 16; }
+    .page[data-index="5"]{ z-index: 15; }
+
+    /* Flipped state */
+    .page.flipped{ transform: rotateY(-180deg); }
+
+    /* Content layout */
+    .content{
+      position: relative;
+      z-index: 1;
+      height:100%;
+      padding: 22px 22px 18px;
+      display:flex;
+      flex-direction:column;
+      gap: 14px;
+    }
+
+    .topline{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap: 14px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid rgba(255,255,255,.10);
+    }
+
+    .titleBlock{ display:flex; flex-direction:column; gap: 6px; }
+
+    .pageTitle{
+      font-size: 18px;
+      margin:0;
+      letter-spacing:.2px;
+    }
+
+    .subtitle{
+      margin:0;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .badge{
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing:.40px;
+      padding: 7px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(242,193,78,.45);
+      background: rgba(242,193,78,.14);
+      color: rgba(255,255,255,.95);
+      white-space:nowrap;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+      padding-top: 6px;
+      overflow:auto;
+    }
+
+    .item{
+      display:grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      padding: 12px 12px;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+    }
+
+    .item h4{
+      margin:0;
+      font-size: 14px;
+      letter-spacing:.15px;
+    }
+
+    .item p{
+      margin: 6px 0 0;
+      font-size: 12.5px;
+      color: var(--muted);
+      line-height:1.35;
+    }
+
+    .price{
+      font-weight: 900;
+      letter-spacing:.3px;
+      color: var(--accent);
+      padding-left: 8px;
+      white-space:nowrap;
+      align-self:start;
+    }
+
+    .foot{
+      margin-top:auto;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 10px;
+      padding-top: 12px;
+      border-top: 1px solid rgba(255,255,255,.10);
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .dots{
+      display:flex;
+      align-items:center;
+      gap: 6px;
+    }
+
+    .dot{
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.18);
+      background: rgba(255,255,255,.06);
+      opacity:.55;
+    }
+
+    .dot.active{
+      opacity: 1;
+      border-color: rgba(242,193,78,.60);
+      background: rgba(242,193,78,.30);
+    }
+
+    /* Mobile tweaks */
+    @media (max-width: 720px){
+      header{ align-items:stretch; }
+      .controls{ justify-content:flex-start; }
+      .stage{ height: min(680px, 72vh); }
+      .page{ inset: 12px; }
+      .content{ padding: 18px 16px 14px; }
+      .item{ grid-template-columns: 1fr; }
+      .price{ padding-left: 0; }
+    }
+
+    /* Reduced motion */
+    @media (prefers-reduced-motion: reduce){
+      .page{ transition: none !important; }
+    }
+  </style>
 </head>
+
 <body>
-    <div class="slot-machine">
-<h1> Potrošite Vašu mjesečnu platu</h1>
-        <div class="reels">
-            <div class="reel-row">
-                <div class="reel" id="reel1_1">🍒</div>
-                <div class="reel" id="reel1_2">🍋</div>
-                <div class="reel" id="reel1_3">🍊</div>
-            </div>
-            <div class="reel-row">
-                <div class="reel" id="reel2_1">🍒</div>
-                <div class="reel" id="reel2_2">🍋</div>
-                <div class="reel" id="reel2_3">🍊</div>
-            </div>
-            <div class="reel-row">
-                <div class="reel" id="reel3_1">🍒</div>
-                <div class="reel" id="reel3_2">🍋</div>
-                <div class="reel" id="reel3_3">🍊</div>
-            </div>
+  <div class="wrap">
+    <header>
+      <div class="brand">
+        <h1 id="brandName">Restoran Aurora</h1>
+        <p id="brandTag">Meni • Sezonski specijaliteti • Podgorica</p>
+      </div>
+
+      <div class="controls">
+        <div class="pill toggle" aria-label="Language">
+          <span style="color:var(--muted); font-size:12px; font-weight:900; letter-spacing:.3px;">LANG</span>
+          <div class="seg" role="tablist" aria-label="Language switch">
+            <button id="langME" class="active" role="tab" aria-selected="true">ME</button>
+            <button id="langEN" role="tab" aria-selected="false">EN</button>
+          </div>
         </div>
-        <div class="controls">
-            <input type="number" id="bet-amount" placeholder="Unesite ulog" min="1">
-            <button id="spin-button">Spin</button>
-        </div>
-        <p id="result"></p>
-        <p id="balance">Stanje: 100</p>
-        <button id="gamble-button">Gamble</button>
-        <button id="choose-red">Crvena</button>
-        <button id="choose-black">Crna</button>
-        <button id="take-money">Uzmi novac</button>
-        <div class="cards" id="cards-container"></div>
+
+        <div class="pill status" id="status" aria-label="Page status">Strana 1 / 6</div>
+      </div>
+    </header>
+
+    <div class="stage" aria-label="Flipbook menu">
+      <div class="book" id="book">
+        <div class="spineGlow"></div>
+        <!-- Pages injected by JS -->
+      </div>
     </div>
-    <script>
-        let balance = 100;  // Početno stanje
-        let lastWinAmount = 0;  // Poslednji osvojeni iznos
-        let currentGambleCount = 0;
-        const maxGambleCount = 8;
-        let correctGuesses = 0;
+  </div>
 
-        document.getElementById('spin-button').addEventListener('click', function() {
-            const betAmount = parseInt(document.getElementById('bet-amount').value, 10);
-            const result = document.getElementById('result');
-            const balanceDisplay = document.getElementById('balance');
-            const gambleButton = document.getElementById('gamble-button');
-            const chooseRed = document.getElementById('choose-red');
-            const chooseBlack = document.getElementById('choose-black');
-            const takeMoney = document.getElementById('take-money');
+  <script>
+    // ------------------------------
+    // 1) PODACI MENIJA (ME + EN)
+    // ------------------------------
+    const MENU = {
+      brand: {
+        name: { me: "Restoran Aurora", en: "Aurora Restaurant" },
+        tag:  { me: "Meni • Sezonski specijaliteti • Podgorica", en: "Menu • Seasonal specials • Podgorica" },
+      },
+      pages: [
+        {
+          id: "cover",
+          badge: { me: "Dobro došli", en: "Welcome" },
+          title: { me: "Meni", en: "Menu" },
+          subtitle: { me: "Dodirni lijevo/desno ili prevuci da listaš", en: "Tap left/right or swipe to flip" },
+          items: [
+            { name: { me: "Radno vrijeme", en: "Opening hours" }, desc: { me: "Pon–Ned: 08:00–23:00", en: "Mon–Sun: 08:00–23:00" }, price: "" },
+            { name: { me: "Wi-Fi", en: "Wi-Fi" }, desc: { me: "Mreža: Aurora • Lozinka: coffee", en: "Network: Aurora • Pass: coffee" }, price: "" },
+            { name: { me: "Alergeni", en: "Allergens" }, desc: { me: "Pitajte osoblje za listu alergena.", en: "Ask our staff for the allergen list." }, price: "" },
+          ],
+          footer: { me: "Hvala što ste svratili 💛", en: "Thanks for visiting 💛" }
+        },
+        {
+          id: "breakfast",
+          badge: { me: "Doručak", en: "Breakfast" },
+          title: { me: "Doručak", en: "Breakfast" },
+          subtitle: { me: "Svježe, lagano i brzo", en: "Fresh, light & quick" },
+          items: [
+            { name: { me: "Avokado tost", en: "Avocado toast" }, desc: { me: "Hljeb od kiselog tijesta, avokado, limeta, čili", en: "Sourdough, avocado, lime, chili" }, price: "6.50€" },
+            { name: { me: "Omlet Aurora", en: "Aurora omelet" }, desc: { me: "Jaja, feta, spanać, cherry paradajz", en: "Eggs, feta, spinach, cherry tomatoes" }, price: "7.20€" },
+            { name: { me: "Granola bowl", en: "Granola bowl" }, desc: { me: "Jogurt, granola, med, bobičasto voće", en: "Yogurt, granola, honey, berries" }, price: "5.80€" },
+          ],
+          footer: { me: "Doručak se služi do 12:00", en: "Breakfast served until 12:00" }
+        },
+        {
+          id: "starters",
+          badge: { me: "Predjela", en: "Starters" },
+          title: { me: "Predjela", en: "Starters" },
+          subtitle: { me: "Za dijeljenje ili kao uvod", en: "To share or start" },
+          items: [
+            { name: { me: "Brusketi", en: "Bruschetta" }, desc: { me: "Paradajz, bosiljak, maslinovo ulje", en: "Tomato, basil, olive oil" }, price: "5.90€" },
+            { name: { me: "Krem supa od bundeve", en: "Pumpkin cream soup" }, desc: { me: "Bundeva, đumbir, pavlaka", en: "Pumpkin, ginger, cream" }, price: "4.80€" },
+            { name: { me: "Daska sireva", en: "Cheese board" }, desc: { me: "Selekcija sireva, orasi, suve smokve", en: "Cheese selection, walnuts, dried figs" }, price: "10.50€" },
+          ],
+          footer: { me: "Vegetarijanske opcije dostupne", en: "Vegetarian options available" }
+        },
+        {
+          id: "mains",
+          badge: { me: "Glavna jela", en: "Mains" },
+          title: { me: "Glavna jela", en: "Mains" },
+          subtitle: { me: "Klasici sa modernim twist-om", en: "Classics with a modern twist" },
+          items: [
+            { name: { me: "Piletina u sosu od pečuraka", en: "Chicken in mushroom sauce" }, desc: { me: "File, pečurke, pire krompir", en: "Chicken breast, mushrooms, mashed potatoes" }, price: "11.90€" },
+            { name: { me: "Rižoto sa kozicama", en: "Shrimp risotto" }, desc: { me: "Kozice, limun, parmezan", en: "Shrimp, lemon, parmesan" }, price: "13.50€" },
+            { name: { me: "Veggie bowl", en: "Veggie bowl" }, desc: { me: "Quinoa, povrće, hummus, tahini", en: "Quinoa, veggies, hummus, tahini" }, price: "10.20€" },
+          ],
+          footer: { me: "Prilozi po izboru", en: "Sides of your choice" }
+        },
+        {
+          id: "desserts",
+          badge: { me: "Deserti", en: "Desserts" },
+          title: { me: "Deserti", en: "Desserts" },
+          subtitle: { me: "Slatki kraj", en: "A sweet finish" },
+          items: [
+            { name: { me: "Čizkejk", en: "Cheesecake" }, desc: { me: "Vanila, šumsko voće", en: "Vanilla, forest berries" }, price: "5.40€" },
+            { name: { me: "Tiramisu", en: "Tiramisu" }, desc: { me: "Kafa, mascarpone, kakao", en: "Coffee, mascarpone, cocoa" }, price: "5.60€" },
+            { name: { me: "Domaći sladoled", en: "Homemade ice cream" }, desc: { me: "2 kugle • ukusi sezonski", en: "2 scoops • seasonal flavors" }, price: "4.50€" },
+          ],
+          footer: { me: "Pitajte za desert dana", en: "Ask for dessert of the day" }
+        },
+        {
+          id: "drinks",
+          badge: { me: "Pića", en: "Drinks" },
+          title: { me: "Pića", en: "Drinks" },
+          subtitle: { me: "Kafa, čaj i osvježenja", en: "Coffee, tea & refreshers" },
+          items: [
+            { name: { me: "Espresso", en: "Espresso" }, desc: { me: "Klasičan", en: "Classic" }, price: "1.60€" },
+            { name: { me: "Cappuccino", en: "Cappuccino" }, desc: { me: "Sa pjenom od mlijeka", en: "With milk foam" }, price: "2.30€" },
+            { name: { me: "Domaći ledeni čaj", en: "Homemade iced tea" }, desc: { me: "Limun / breskva", en: "Lemon / peach" }, price: "2.80€" },
+          ],
+          footer: { me: "Napitak dana u ponudi", en: "Daily special available" }
+        },
+      ]
+    };
 
-            if (isNaN(betAmount) || betAmount <= 0) {
-                result.textContent = 'Unesite ispravan iznos uloga.';
-                return;
-            }
+    // ------------------------------
+    // 2) RENDER + FLIPBOOK LOGIKA
+    // ------------------------------
+    const book = document.getElementById('book');
+    const statusEl = document.getElementById('status');
+    const langME = document.getElementById('langME');
+    const langEN = document.getElementById('langEN');
 
-            if (betAmount > balance) {
-                result.textContent = 'Nemate dovoljno sredstava za ovaj ulog.';
-                return;
-            }
+    let lang = 'me';
+    let pageIndex = 0;
 
-            const symbols = ['🍒', '🍋', '🍊', '🍉', '⭐', '<img src="danilo.png" alt="Danilo">'];
-            const reels = [
-                [document.getElementById('reel1_1'), document.getElementById('reel1_2'), document.getElementById('reel1_3')],
-                [document.getElementById('reel2_1'), document.getElementById('reel2_2'), document.getElementById('reel2_3')],
-                [document.getElementById('reel3_1'), document.getElementById('reel3_2'), document.getElementById('reel3_3')]
-            ];
+    function el(tag, attrs={}, children=[]) {
+      const node = document.createElement(tag);
+      for (const [k,v] of Object.entries(attrs)) {
+        if (k === 'class') node.className = v;
+        else if (k.startsWith('data-')) node.setAttribute(k, v);
+        else if (k === 'html') node.innerHTML = v;
+        else node.setAttribute(k, v);
+      }
+      for (const ch of children) node.appendChild(typeof ch === 'string' ? document.createTextNode(ch) : ch);
+      return node;
+    }
 
-            // Randomly select symbols for each reel
-            for (let row of reels) {
-                for (let reel of row) {
-                    reel.innerHTML = symbols[Math.floor(Math.random() * symbols.length)];
-                }
-            }
+    function t(obj){
+      if (!obj) return '';
+      return obj[lang] ?? obj.me ?? obj.en ?? '';
+    }
 
-            // Check for win
-            let win = false;
-            // Check rows and columns
-            for (let i = 0; i < 3; i++) {
-                if (reels[i][0].innerHTML === reels[i][1].innerHTML && reels[i][1].innerHTML === reels[i][2].innerHTML) {
-                    win = true;
-                }
-                if (reels[0][i].innerHTML === reels[1][i].innerHTML && reels[1][i].innerHTML === reels[2][i].innerHTML) {
-                    win = true;
-                }
-            }
-            // Check diagonals
-            if (reels[0][0].innerHTML === reels[1][1].innerHTML && reels[1][1].innerHTML === reels[2][2].innerHTML) {
-                win = true;
-            }
-            if (reels[0][2].innerHTML === reels[1][1].innerHTML && reels[1][1].innerHTML === reels[2][0].innerHTML) {
-                win = true;
-            }
+    function setBrand(){
+      document.documentElement.lang = lang;
+      document.getElementById('brandName').textContent = t(MENU.brand.name);
+      document.getElementById('brandTag').textContent  = t(MENU.brand.tag);
+    }
 
-            if (win) {
-                lastWinAmount = betAmount * 10;  // Dobitak je 10 puta veći od uloga
-                balance += lastWinAmount;
-                result.textContent = `Pobeda! Osvojili ste ${lastWinAmount} jedinica.`;
-                gambleButton.style.display = 'inline-block';  // Prikaži dugme za kockanje
-            } else {
-                balance -= betAmount;
-                result.textContent = 'Nema dobitka, pokušajte ponovo.';
-                gambleButton.style.display = 'none';  // Sakrij dugme za kockanje
-                chooseRed.style.display = 'none';  // Sakrij dugmad za biranje boje
-                chooseBlack.style.display = 'none';
-                takeMoney.style.display = 'none';  // Sakrij dugme za uzimanje novca
-                document.getElementById('cards-container').innerHTML = '';  // Resetuj karte
-            }
+    function renderPages(){
+      book.querySelectorAll('.page').forEach(p => p.remove());
 
-            balanceDisplay.textContent = `Stanje: ${balance}`;
+      const pages = MENU.pages;
+      pages.forEach((p, i) => {
+        const page = el('div', { class: 'page', 'data-index': String(i), 'aria-label': `Page ${i+1}`});
 
-            if (balance <= 0) {
-                result.textContent = 'Nemate više sredstava za igru. Igra je završena.';
-                document.getElementById('spin-button').disabled = true;
-                gambleButton.style.display = 'none';  // Sakrij dugme za kockanje
-                chooseRed.style.display = 'none';  // Sakrij dugmad za biranje boje
-                chooseBlack.style.display = 'none';
-                takeMoney.style.display = 'none';  // Sakrij dugme za uzimanje novca
-                document.getElementById('cards-container').innerHTML = '';  // Resetuj karte
-            }
-        });
+        const front = el('div', { class: 'front' }, [
+          el('div', { class:'grain' }),
+          renderContent(p, i)
+        ]);
 
-        document.getElementById('gamble-button').addEventListener('click', function() {
-            const chooseRed = document.getElementById('choose-red');
-            const chooseBlack = document.getElementById('choose-black');
-            const takeMoney = document.getElementById('take-money');
+        const back = el('div', { class: 'back' }, [
+          el('div', { class:'grain' }),
+          renderBackContent(p, i)
+        ]);
 
-            chooseRed.style.display = 'inline-block';  // Prikaži dugmad za biranje boje
-            chooseBlack.style.display = 'inline-block';
-            takeMoney.style.display = 'inline-block';  // Prikaži dugme za uzimanje novca
-            currentGambleCount = 0;
-            correctGuesses = 0;
+        page.appendChild(front);
+        page.appendChild(back);
+        book.appendChild(page);
+      });
 
-            // Pokaži prve tri karte
-            const cardsContainer = document.getElementById('cards-container');
-            cardsContainer.innerHTML = '';
-            for (let i = 0; i < 3; i++) {
-                const cardColor = (Math.random() < 0.5) ? 'red' : 'black';
-                const card = document.createElement('div');
-                card.classList.add('card', cardColor);
-                card.textContent = cardColor === 'red' ? '♥' : '♠';
-                cardsContainer.appendChild(card);
-            }
-        });
+      syncFlipState();
+      updateDots();
+      updateStatus();
+    }
 
-        document.getElementById('choose-red').addEventListener('click', function() {
-            gamble('red');
-        });
+    function renderContent(p, i){
+      const items = p.items || [];
+      const grid = el('div', { class: 'grid' }, items.map(item => {
+        return el('div', { class: 'item' }, [
+          el('div', {}, [
+            el('h4', {}, [t(item.name)]),
+            el('p', {}, [t(item.desc)])
+          ]),
+          el('div', { class: 'price' }, [item.price || ''])
+        ]);
+      }));
 
-        document.getElementById('choose-black').addEventListener('click', function() {
-            gamble('black');
-        });
+      const dots = el('div', { class: 'dots', 'aria-label': 'Progress dots' }, MENU.pages.map((_, di) => {
+        return el('div', { class: 'dot' + (di===i ? ' active':''), 'data-dot': String(di) });
+      }));
 
-        document.getElementById('take-money').addEventListener('click', function() {
-            const result = document.getElementById('result');
-            result.textContent = `Uzeli ste ${lastWinAmount} jedinica.`;
-            resetGamble();
-        });
+      const foot = el('div', { class: 'foot' }, [
+        el('span', {}, [p.footer ? t(p.footer) : '']),
+        dots,
+      ]);
 
-        function gamble(choice) {
-            const result = document.getElementById('result');
-            const balanceDisplay = document.getElementById('balance');
-            const gambleButton = document.getElementById('gamble-button');
-            const chooseRed = document.getElementById('choose-red');
-            const chooseBlack = document.getElementById('choose-black');
-            const takeMoney = document.getElementById('take-money');
+      return el('div', { class: 'content' }, [
+        el('div', { class: 'topline' }, [
+          el('div', { class: 'titleBlock' }, [
+            el('h3', { class: 'pageTitle' }, [t(p.title)]),
+            el('p', { class: 'subtitle' }, [t(p.subtitle)])
+          ]),
+          el('div', { class: 'badge' }, [t(p.badge)])
+        ]),
+        grid,
+        foot
+      ]);
+    }
 
-            const cardsContainer = document.getElementById('cards-container');
-            const cardColor = (Math.random() < 0.5) ? 'red' : 'black';
-            const card = document.createElement('div');
-            card.classList.add('card', cardColor);
-            card.textContent = cardColor === 'red' ? '♥' : '♠';
-            cardsContainer.appendChild(card);
+    function renderBackContent(p, i){
+      const next = MENU.pages[i+1];
+      const label = next ? `${t(next.badge)} • ${t(next.title)}` : (lang==='me' ? 'Kraj menija' : 'End of menu');
+      return el('div', { class: 'content' }, [
+        el('div', { class: 'topline' }, [
+          el('div', { class: 'titleBlock' }, [
+            el('h3', { class: 'pageTitle' }, [lang==='me' ? 'Sljedeće' : 'Next']),
+            el('p', { class: 'subtitle' }, [label])
+          ]),
+          el('div', { class: 'badge' }, [lang==='me' ? 'Okreni stranu' : 'Flip page'])
+        ]),
+        el('div', { class: 'grid' }, [
+          el('div', { class: 'item' }, [
+            el('div', {}, [
+              el('h4', {}, [lang==='me' ? 'Savjet' : 'Tip']),
+              el('p', {}, [lang==='me'
+                ? 'Dodirni desnu stranu knjige ili prevuci lijevo.'
+                : 'Tap the right side or swipe left.'])
+            ]),
+            el('div', { class: 'price' }, [''])
+          ])
+        ]),
+        el('div', { class: 'foot' }, [
+          el('span', {}, ['© ' + new Date().getFullYear() + ' Aurora']),
+          el('span', {}, [''])
+        ])
+      ]);
+    }
 
-            if (cardColor === choice) {
-                correctGuesses++;
-                if (correctGuesses >= 2) {
-                    takeMoney.style.display = 'inline-block';  // Prikaži dugme za uzimanje novca
-                }
-                lastWinAmount *= 2;
-                result.textContent = `Sreća! Udvostručili ste svoj dobitak na ${lastWinAmount} jedinica.`;
-                currentGambleCount++;
-                if (currentGambleCount >= maxGambleCount) {
-                    result.textContent += ' Dostigli ste maksimalan broj kockanja.';
-                    resetGamble();
-                }
-            } else {
-                result.textContent = 'Izgubili ste dobitak.';
-                lastWinAmount = 0;
-                resetGamble();
-            }
+    function syncFlipState(){
+      const pages = Array.from(book.querySelectorAll('.page'));
+      pages.forEach((p, i) => {
+        if (i < pageIndex) p.classList.add('flipped');
+        else p.classList.remove('flipped');
+      });
+    }
 
-            balanceDisplay.textContent = `Stanje: ${balance}`;
+    function updateStatus(){
+      const total = MENU.pages.length;
+      const current = Math.min(pageIndex + 1, total);
+      statusEl.textContent = lang === 'me'
+        ? `Strana ${current} / ${total}`
+        : `Page ${current} / ${total}`;
+    }
 
-            if (balance <= 0) {
-                result.textContent = 'Nemate više sredstava za igru. Igra je završena.';
-                document.getElementById('spin-button').disabled = true;
-            }
-        }
+    function updateDots(){
+      book.querySelectorAll('[data-dot]').forEach(d => {
+        const idx = Number(d.getAttribute('data-dot'));
+        d.classList.toggle('active', idx === pageIndex);
+      });
+    }
 
-        function resetGamble() {
-            const gambleButton = document.getElementById('gamble-button');
-            const chooseRed = document.getElementById('choose-red');
-            const chooseBlack = document.getElementById('choose-black');
-            const takeMoney = document.getElementById('take-money');
-            const cardsContainer = document.getElementById('cards-container');
+    function goNext(){
+      const total = MENU.pages.length;
+      if (pageIndex >= total - 1) return;
+      pageIndex++;
+      syncFlipState();
+      updateDots();
+      updateStatus();
+    }
 
-            gambleButton.style.display = 'none';  // Sakrij dugme za kockanje
-            chooseRed.style.display = 'none';  // Sakrij dugmad za biranje boje
-            chooseBlack.style.display = 'none';
-            takeMoney.style.display = 'none';  // Sakrij dugme za uzimanje novca
-            cardsContainer.innerHTML = '';  // Resetuj karte
+    function goPrev(){
+      if (pageIndex <= 0) return;
+      pageIndex--;
+      syncFlipState();
+      updateDots();
+      updateStatus();
+    }
 
-            balance += lastWinAmount;  // Dodaj osvojeni iznos na balans
-            document.getElementById('balance').textContent = `Stanje: ${balance}`;
-        }
-    </script>
+    // Language switch
+    function setLang(newLang){
+      lang = newLang;
+      langME.classList.toggle('active', lang==='me');
+      langEN.classList.toggle('active', lang==='en');
+      langME.setAttribute('aria-selected', lang==='me' ? 'true':'false');
+      langEN.setAttribute('aria-selected', lang==='en' ? 'true':'false');
+
+      setBrand();
+      renderPages();
+    }
+
+    langME.addEventListener('click', () => setLang('me'));
+    langEN.addEventListener('click', () => setLang('en'));
+
+    // Touch / swipe
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let touching = false;
+
+    book.addEventListener('touchstart', (e) => {
+      if (!e.touches || e.touches.length !== 1) return;
+      touching = true;
+      touchStartX = e.touches[0].clientX;
+      touchStartY = e.touches[0].clientY;
+    }, { passive: true });
+
+    book.addEventListener('touchend', (e) => {
+      if (!touching) return;
+      touching = false;
+
+      const t = e.changedTouches && e.changedTouches[0];
+      if (!t) return;
+
+      const dx = t.clientX - touchStartX;
+      const dy = t.clientY - touchStartY;
+
+      if (Math.abs(dx) > 48 && Math.abs(dy) < 60) {
+        if (dx < 0) goNext();
+        else goPrev();
+      }
+    }, { passive: true });
+
+    // Init
+    setBrand();
+    renderPages();
+
+    // Tap left/right half to flip
+    book.addEventListener('click', (e) => {
+      const rect = book.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      if (x > rect.width * 0.56) goNext();
+      else if (x < rect.width * 0.44) goPrev();
+    });
+  </script>
 </body>
 </html>
