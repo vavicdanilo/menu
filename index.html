@@ -8,23 +8,17 @@
 
   <style>
     :root{
-      /* Elegant black & gold palette */
       --bg: #050505;
       --bg2: #0b0b0b;
 
       --paper: #121212;
       --paper-soft: #161616;
 
-      --card: rgba(255,255,255,.05);
-      --card2: rgba(255,255,255,.08);
-
       --text: rgba(255,255,255,.95);
       --muted: rgba(255,255,255,.65);
       --line: rgba(255,255,255,.14);
 
-      --accent: #f2c14e;      /* elegant gold */
-      --accent-soft: #f7d87c;
-
+      --accent: #f2c14e;
       --shadow: 0 30px 80px rgba(0,0,0,.75);
 
       --radius: 24px;
@@ -34,7 +28,6 @@
       --book-h: min(640px, 78vh);
 
       --flip-dur: 650ms;
-
       --font: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
     }
 
@@ -70,24 +63,14 @@
       gap: 14px;
     }
 
-    .brand{
-      display:flex;
-      flex-direction:column;
-      gap: 6px;
-    }
-
+    .brand{ display:flex; flex-direction:column; gap: 6px; }
     .brand h1{
       margin:0;
       font-size: clamp(22px, 2.8vw, 34px);
       letter-spacing: .2px;
       line-height:1.08;
     }
-
-    .brand p{
-      margin:0;
-      color: var(--muted);
-      font-size: 14px;
-    }
+    .brand p{ margin:0; color: var(--muted); font-size: 14px; }
 
     .controls{
       display:flex;
@@ -109,12 +92,6 @@
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
       user-select:none;
-    }
-
-    .toggle{
-      display:flex;
-      align-items:center;
-      gap: 10px;
     }
 
     .seg{
@@ -154,7 +131,7 @@
 
     /* Book */
     .stage{
-      perspective: 2200px; /* a bit deeper for magazine feel */
+      perspective: 2400px; /* deeper for magazine feel */
       width: var(--book-w);
       height: var(--book-h);
       display:flex;
@@ -199,9 +176,12 @@
       will-change: transform;
       cursor: grab;
 
-      /* magazine curl progress */
-      --p: 0;
-      --edge: 12px;
+      /* curl progress and stack */
+      --p: 0;           /* 0..1 */
+      --stackZ: 0px;    /* thickness */
+      --stackX: 0px;
+      --zTilt: 0deg;
+      --lift: 0px;
     }
     .page:active{ cursor: grabbing; }
 
@@ -215,16 +195,12 @@
       overflow:hidden;
       border: 1px solid rgba(255,255,255,.12);
 
-      /* Opaque paper (prevents see-through) */
       background: linear-gradient(180deg, var(--paper), var(--paper-soft));
       box-shadow:
         inset 0 1px 0 rgba(255,255,255,.05),
         inset 0 -20px 40px rgba(0,0,0,.45);
     }
-
-    .page .back{
-      transform: rotateY(180deg);
-    }
+    .page .back{ transform: rotateY(180deg); }
 
     /* Subtle paper grain */
     .grain{
@@ -238,7 +214,7 @@
       z-index: 0;
     }
 
-    /* Page stacking */
+    /* Page stacking (z-index already defined) */
     .page{ z-index: 10; }
     .page[data-index="0"]{ z-index: 20; }
     .page[data-index="1"]{ z-index: 19; }
@@ -246,9 +222,6 @@
     .page[data-index="3"]{ z-index: 17; }
     .page[data-index="4"]{ z-index: 16; }
     .page[data-index="5"]{ z-index: 15; }
-
-    /* Flipped state */
-    .page.flipped{ transform: rotateY(-180deg); }
 
     /* Content layout */
     .content{
@@ -314,18 +287,8 @@
       background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
     }
 
-    .item h4{
-      margin:0;
-      font-size: 14px;
-      letter-spacing:.15px;
-    }
-
-    .item p{
-      margin: 6px 0 0;
-      font-size: 12.5px;
-      color: var(--muted);
-      line-height:1.35;
-    }
+    .item h4{ margin:0; font-size: 14px; letter-spacing:.15px; }
+    .item p{ margin: 6px 0 0; font-size: 12.5px; color: var(--muted); line-height:1.35; }
 
     .price{
       font-weight: 900;
@@ -348,28 +311,21 @@
       font-size: 12px;
     }
 
-    .dots{
-      display:flex;
-      align-items:center;
-      gap: 6px;
-    }
-
+    .dots{ display:flex; align-items:center; gap: 6px; }
     .dot{
-      width: 7px;
-      height: 7px;
+      width: 7px; height: 7px;
       border-radius: 999px;
       border: 1px solid rgba(255,255,255,.18);
       background: rgba(255,255,255,.06);
       opacity:.55;
     }
-
     .dot.active{
       opacity: 1;
       border-color: rgba(242,193,78,.60);
       background: rgba(242,193,78,.30);
     }
 
-    /* ===== Magazine-like page curl ===== */
+    /* ===== Magazine curl (mirrored left/right) ===== */
     .page::after{
       content:"";
       position:absolute;
@@ -377,44 +333,64 @@
       border-radius: var(--page-radius);
       pointer-events:none;
       opacity: 1;
+      mix-blend-mode: multiply;
       background:
-        radial-gradient(600px 400px at 85% 50%,
+        radial-gradient(650px 420px at 85% 50%,
           rgba(0,0,0, calc(.55 * var(--p))) 0%,
           rgba(0,0,0, 0) 55%),
         linear-gradient(90deg,
           rgba(0,0,0, calc(.10 + .25*var(--p))) 0%,
           rgba(0,0,0, 0) 45%,
           rgba(0,0,0, calc(.12 + .40*var(--p))) 100%);
-      mix-blend-mode: multiply;
       transition: opacity 120ms ease;
     }
 
-    .page .front::before,
-    .page .back::before{
+    /* Curl edge RIGHT (forward) */
+    .page[data-curl="right"] .front::before,
+    .page[data-curl="right"] .back::before{
       content:"";
       position:absolute;
       top:0; bottom:0;
       right:0;
-      width: calc(var(--edge) + 30px);
+      width: 48px;
       pointer-events:none;
       border-radius: 0 var(--page-radius) var(--page-radius) 0;
       background:
         linear-gradient(90deg,
           rgba(0,0,0,0) 0%,
-          rgba(255,255,255, calc(.04 + .18*var(--p))) 35%,
-          rgba(255,255,255, calc(.02 + .10*var(--p))) 55%,
-          rgba(0,0,0, calc(.10 + .55*var(--p))) 78%,
-          rgba(0,0,0, calc(.18 + .70*var(--p))) 100%);
-      opacity: 1;
+          rgba(255,255,255, calc(.05 + .20*var(--p))) 35%,
+          rgba(255,255,255, calc(.02 + .12*var(--p))) 55%,
+          rgba(0,0,0, calc(.10 + .58*var(--p))) 78%,
+          rgba(0,0,0, calc(.18 + .75*var(--p))) 100%);
     }
 
+    /* Curl edge LEFT (backward) - mirrored */
+    .page[data-curl="left"] .front::before,
+    .page[data-curl="left"] .back::before{
+      content:"";
+      position:absolute;
+      top:0; bottom:0;
+      left:0;
+      width: 48px;
+      pointer-events:none;
+      border-radius: var(--page-radius) 0 0 var(--page-radius);
+      background:
+        linear-gradient(270deg,
+          rgba(0,0,0,0) 0%,
+          rgba(255,255,255, calc(.05 + .20*var(--p))) 35%,
+          rgba(255,255,255, calc(.02 + .12*var(--p))) 55%,
+          rgba(0,0,0, calc(.10 + .58*var(--p))) 78%,
+          rgba(0,0,0, calc(.18 + .75*var(--p))) 100%);
+    }
+
+    /* A little crease near spine */
     .page .front::after,
     .page .back::after{
       content:"";
       position:absolute;
       top:0; bottom:0;
       left: 10px;
-      width: 50px;
+      width: 52px;
       pointer-events:none;
       background: linear-gradient(90deg,
         rgba(0,0,0, calc(.14*var(--p))) 0%,
@@ -422,11 +398,8 @@
       opacity: 1;
     }
 
-    .page.is-dragging{
-      transition: none !important;
-    }
+    .page.is-dragging{ transition: none !important; }
 
-    /* Mobile tweaks */
     @media (max-width: 720px){
       header{ align-items:stretch; }
       .controls{ justify-content:flex-start; }
@@ -437,7 +410,6 @@
       .price{ padding-left: 0; }
     }
 
-    /* Reduced motion */
     @media (prefers-reduced-motion: reduce){
       .page{ transition: none !important; }
     }
@@ -468,15 +440,11 @@
     <div class="stage" aria-label="Flipbook menu">
       <div class="book" id="book">
         <div class="spineGlow"></div>
-        <!-- Pages injected by JS -->
       </div>
     </div>
   </div>
 
   <script>
-    // ------------------------------
-    // 1) PODACI MENIJA (ME + EN)
-    // ------------------------------
     const MENU = {
       brand: {
         name: { me: "Restoran Vukova svaštara", en: "Vukova svaštara Restaurant" },
@@ -487,13 +455,13 @@
           id: "cover",
           badge: { me: "Dobro došli", en: "Welcome" },
           title: { me: "Meni", en: "Menu" },
-          subtitle: { me: "Prevuci stranicu — efekat kao časopis", en: "Drag the page — magazine-like flip" },
+          subtitle: { me: "Prevuci stranicu naprijed/nazad (magazine flip)", en: "Drag pages forward/back (magazine flip)" },
           items: [
             { name: { me: "Radno vrijeme", en: "Opening hours" }, desc: { me: "Pon–Ned: 08:00–23:00", en: "Mon–Sun: 08:00–23:00" }, price: "" },
             { name: { me: "Wi-Fi", en: "Wi-Fi" }, desc: { me: "Mreža: Vukova • Lozinka: coffee", en: "Network: Vukova • Pass: coffee" }, price: "" },
             { name: { me: "Alergeni", en: "Allergens" }, desc: { me: "Pitajte osoblje za listu alergena.", en: "Ask our staff for the allergen list." }, price: "" },
           ],
-          footer: { me: "Hvala što ste svratili ", en: "Thanks for visiting " }
+          footer: { me: "Hvala što ste svratili 💛", en: "Thanks for visiting 💛" }
         },
         {
           id: "breakfast",
@@ -558,9 +526,6 @@
       ]
     };
 
-    // ------------------------------
-    // 2) RENDER + FLIPBOOK LOGIKA
-    // ------------------------------
     const book = document.getElementById('book');
     const statusEl = document.getElementById('status');
     const langME = document.getElementById('langME');
@@ -592,30 +557,19 @@
       document.getElementById('brandTag').textContent  = t(MENU.brand.tag);
     }
 
-    function renderPages(){
-      book.querySelectorAll('.page').forEach(p => p.remove());
+    function updateStatus(){
+      const total = MENU.pages.length;
+      const current = Math.min(pageIndex + 1, total);
+      statusEl.textContent = lang === 'me'
+        ? `Strana ${current} / ${total}`
+        : `Page ${current} / ${total}`;
+    }
 
-      MENU.pages.forEach((p, i) => {
-        const page = el('div', { class: 'page', 'data-index': String(i), 'aria-label': `Page ${i+1}`});
-
-        const front = el('div', { class: 'front' }, [
-          el('div', { class:'grain' }),
-          renderContent(p, i)
-        ]);
-
-        const back = el('div', { class: 'back' }, [
-          el('div', { class:'grain' }),
-          renderBackContent(p, i)
-        ]);
-
-        page.appendChild(front);
-        page.appendChild(back);
-        book.appendChild(page);
+    function updateDots(){
+      book.querySelectorAll('[data-dot]').forEach(d => {
+        const idx = Number(d.getAttribute('data-dot'));
+        d.classList.toggle('active', idx === pageIndex);
       });
-
-      syncFlipState();
-      updateDots();
-      updateStatus();
     }
 
     function renderContent(p, i){
@@ -652,9 +606,10 @@
       ]);
     }
 
-    function renderBackContent(p, i){
+    function renderBackContent(i){
       const next = MENU.pages[i+1];
       const label = next ? `${t(next.badge)} • ${t(next.title)}` : (lang==='me' ? 'Kraj menija' : 'End of menu');
+
       return el('div', { class: 'content' }, [
         el('div', { class: 'topline' }, [
           el('div', { class: 'titleBlock' }, [
@@ -668,8 +623,8 @@
             el('div', {}, [
               el('h4', {}, [lang==='me' ? 'Savjet' : 'Tip']),
               el('p', {}, [lang==='me'
-                ? 'Prevuci stranicu i pusti preko pola da se okrene.'
-                : 'Drag the page; release past halfway to flip.'])
+                ? 'Prevuci desnu stranu za naprijed, lijevu za nazad.'
+                : 'Drag right side forward, left side backward.'])
             ]),
             el('div', { class: 'price' }, [''])
           ])
@@ -681,84 +636,112 @@
       ]);
     }
 
+    function renderPages(){
+      book.querySelectorAll('.page').forEach(p => p.remove());
+
+      MENU.pages.forEach((p, i) => {
+        const page = el('div', { class: 'page', 'data-index': String(i), 'data-curl': 'right', 'aria-label': `Page ${i+1}`});
+
+        const front = el('div', { class: 'front' }, [
+          el('div', { class:'grain' }),
+          renderContent(p, i)
+        ]);
+
+        const back = el('div', { class: 'back' }, [
+          el('div', { class:'grain' }),
+          renderBackContent(i)
+        ]);
+
+        page.appendChild(front);
+        page.appendChild(back);
+        book.appendChild(page);
+      });
+
+      syncFlipState();
+      updateDots();
+      updateStatus();
+    }
+
+    // --------- STACK + SNAP STATE (fixes "forward pages should show") ----------
     function syncFlipState(){
       const pages = Array.from(book.querySelectorAll('.page'));
+
       pages.forEach((p, i) => {
-        if (i < pageIndex) p.classList.add('flipped');
-        else p.classList.remove('flipped');
+        const dist = i - pageIndex;
+
+        // Thickness / fanning (subtle)
+        const z = -Math.min(10, Math.abs(dist)) * 2;         // depth
+        const x = (dist >= 0 ? 1 : -1) * Math.min(10, Math.abs(dist)) * 0.8;
+
+        p.style.setProperty('--stackZ', `${z}px`);
+        p.style.setProperty('--stackX', `${x}px`);
+        p.style.setProperty('--p', '0'); // reset curl progress when snapped
+
+        // Set default curl side for correct direction feel
+        // Upcoming pages: curl right (forward), already flipped pages: curl left (backward)
+        p.dataset.curl = (i < pageIndex) ? 'left' : 'right';
+
+        if (i < pageIndex) {
+          // flipped pages
+          p.style.transform = `translateZ(${z}px) translateX(${x}px) rotateY(-180deg)`;
+        } else {
+          // unflipped pages (including current)
+          p.style.transform = `translateZ(${z}px) translateX(${x}px) rotateY(0deg)`;
+        }
       });
     }
 
-    function updateStatus(){
-      const total = MENU.pages.length;
-      const current = Math.min(pageIndex + 1, total);
-      statusEl.textContent = lang === 'me'
-        ? `Strana ${current} / ${total}`
-        : `Page ${current} / ${total}`;
-    }
+    function clamp(v, a, b){ return Math.max(a, Math.min(b, v)); }
 
-    function updateDots(){
-      book.querySelectorAll('[data-dot]').forEach(d => {
-        const idx = Number(d.getAttribute('data-dot'));
-        d.classList.toggle('active', idx === pageIndex);
-      });
-    }
-
-    // Language switch
-    function setLang(newLang){
-      lang = newLang;
-      langME.classList.toggle('active', lang==='me');
-      langEN.classList.toggle('active', lang==='en');
-      langME.setAttribute('aria-selected', lang==='me' ? 'true':'false');
-      langEN.setAttribute('aria-selected', lang==='en' ? 'true':'false');
-
-      setBrand();
-      renderPages();
-    }
-
-    langME.addEventListener('click', () => setLang('me'));
-    langEN.addEventListener('click', () => setLang('en'));
-
-    // --- Magazine-like drag-to-flip (hold halfway) ---
+    // --------- DRAG FLIP (forward/backward with mirrored curl) ----------
     let dragging = false;
     let dragPage = null;
     let dragIndex = -1;
+    let dragDir = "forward";
     let startX = 0;
     let startAngle = 0;
     let currentAngle = 0;
-
-    function clamp(v, a, b){ return Math.max(a, Math.min(b, v)); }
 
     function baseAngleForIndex(i){
       return (i < pageIndex) ? -180 : 0;
     }
 
     function setPageAngle(pageEl, angle){
-      // angle: 0 .. -180
-      const p = Math.min(1, Math.max(0, Math.abs(angle) / 180)); // 0..1 progress
+      const p = Math.min(1, Math.max(0, Math.abs(angle) / 180)); // 0..1
 
-      // magazine "warp": tiny z-tilt + slide + lift
-      const zTilt = (p - 0.5) * 2 * 2.2;        // -2.2deg .. +2.2deg
-      const slide = p * 10;                     // 0..10px
-      const lift  = Math.sin(p * Math.PI) * 3;  // 0..3px..0
+      // “magazine warp”
+      const zTilt = (p - 0.5) * 2 * 3.4;        // stronger than before
+      const slide = p * 16;                      // more lateral movement
+      const lift  = Math.sin(p * Math.PI) * 5;   // more lift
 
       pageEl.style.setProperty('--p', String(p));
+
+      // Keep stack translation even during drag
+      const z = pageEl.style.getPropertyValue('--stackZ') || '0px';
+      const x = pageEl.style.getPropertyValue('--stackX') || '0px';
+
+      // Direction-specific: backward should “pull” opposite a bit
+      const dirMul = (dragDir === "backward") ? -1 : 1;
+
       pageEl.style.transform =
-        `translateY(${-lift}px) translateX(${slide}px) rotateZ(${zTilt}deg) rotateY(${angle}deg)`;
+        `translateZ(${z}) translateX(calc(${x} + ${dirMul * slide}px)) translateY(${-lift}px) rotateZ(${dirMul * zTilt}deg) rotateY(${angle}deg)`;
     }
 
     function getTopInteractivePage(clientX){
       const rect = book.getBoundingClientRect();
       const relX = clientX - rect.left;
 
-      if (relX > rect.width * 0.52) {
+      // Right side => forward (drag current page)
+      if (relX > rect.width * 0.54) {
         if (pageIndex >= MENU.pages.length - 1) return null;
-        return { idx: pageIndex };
+        return { idx: pageIndex, dir: "forward" };
       }
-      if (relX < rect.width * 0.48) {
+      // Left side => backward (drag previous page back)
+      if (relX < rect.width * 0.46) {
         if (pageIndex <= 0) return null;
-        return { idx: pageIndex - 1 };
+        return { idx: pageIndex - 1, dir: "backward" };
       }
+
       return null;
     }
 
@@ -770,11 +753,15 @@
 
       dragging = true;
       dragIndex = target.idx;
+      dragDir = target.dir;
 
       dragPage = book.querySelector(`.page[data-index="${dragIndex}"]`);
       if (!dragPage) return;
 
       dragPage.classList.add("is-dragging");
+
+      // IMPORTANT: curl side mirrored automatically
+      dragPage.dataset.curl = (dragDir === "forward") ? "right" : "left";
 
       try { book.setPointerCapture(e.pointerId); } catch(_) {}
 
@@ -792,9 +779,12 @@
       const rect = book.getBoundingClientRect();
       const dx = e.clientX - startX;
 
-      // Full width drag ≈ 180deg
       const degPerPx = 180 / rect.width;
-      let angle = startAngle + (-dx * degPerPx);
+
+      // forward: dragging left should increase flip
+      // backward: dragging right should unflip
+      let angle = startAngle + ((dragDir === "forward") ? (-dx * degPerPx) : (-dx * degPerPx));
+
       angle = clamp(angle, -180, 0);
 
       currentAngle = angle;
@@ -808,34 +798,28 @@
 
       const threshold = -90;
       const shouldFlip = currentAngle < threshold;
+
       const wasFlipped = (dragIndex < pageIndex);
 
       if (!wasFlipped) {
+        // forward
         if (shouldFlip) pageIndex = Math.min(pageIndex + 1, MENU.pages.length - 1);
       } else {
+        // backward
         if (!shouldFlip) pageIndex = Math.max(pageIndex - 1, 0);
       }
-
-      syncFlipState();
-      updateDots();
-      updateStatus();
-
-      // reset inline transform so snapped state is clean
-      dragPage.style.transform = "";
-      dragPage.style.setProperty('--p', '0');
 
       dragPage = null;
       dragIndex = -1;
       dragging = false;
+
+      syncFlipState();
+      updateDots();
+      updateStatus();
     }
 
     function cancelDrag(){
       dragging = false;
-      if (dragPage){
-        dragPage.classList.remove("is-dragging");
-        dragPage.style.transform = "";
-        dragPage.style.setProperty('--p', '0');
-      }
       dragPage = null;
       dragIndex = -1;
       syncFlipState();
@@ -848,37 +832,19 @@
     window.addEventListener("pointerup", () => { if (dragging) finishDrag(); }, { passive: true });
     window.addEventListener("pointercancel", () => { if (dragging) cancelDrag(); }, { passive: true });
 
-    // Swipe fallback (quick flip)
-    let touchStartX = 0;
-    let touchStartY = 0;
-    let touching = false;
+    // Language switch
+    function setLang(newLang){
+      lang = newLang;
+      langME.classList.toggle('active', lang==='me');
+      langEN.classList.toggle('active', lang==='en');
+      langME.setAttribute('aria-selected', lang==='me' ? 'true':'false');
+      langEN.setAttribute('aria-selected', lang==='en' ? 'true':'false');
 
-    book.addEventListener('touchstart', (e) => {
-      if (!e.touches || e.touches.length !== 1) return;
-      touching = true;
-      touchStartX = e.touches[0].clientX;
-      touchStartY = e.touches[0].clientY;
-    }, { passive: true });
-
-    book.addEventListener('touchend', (e) => {
-      if (!touching) return;
-      touching = false;
-
-      const t = e.changedTouches && e.changedTouches[0];
-      if (!t) return;
-
-      const dx = t.clientX - touchStartX;
-      const dy = t.clientY - touchStartY;
-
-      if (Math.abs(dx) > 48 && Math.abs(dy) < 60) {
-        if (dx < 0) pageIndex = Math.min(pageIndex + 1, MENU.pages.length - 1);
-        else pageIndex = Math.max(pageIndex - 1, 0);
-
-        syncFlipState();
-        updateDots();
-        updateStatus();
-      }
-    }, { passive: true });
+      setBrand();
+      renderPages();
+    }
+    langME.addEventListener('click', () => setLang('me'));
+    langEN.addEventListener('click', () => setLang('en'));
 
     // Init
     setBrand();
@@ -886,4 +852,3 @@
   </script>
 </body>
 </html>
-
