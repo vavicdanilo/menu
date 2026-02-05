@@ -154,7 +154,7 @@
 
     /* Book */
     .stage{
-      perspective: 1800px;
+      perspective: 2200px; /* a bit deeper for magazine feel */
       width: var(--book-w);
       height: var(--book-h);
       display:flex;
@@ -198,6 +198,10 @@
       transition: transform var(--flip-dur) cubic-bezier(.2,.8,.2,1);
       will-change: transform;
       cursor: grab;
+
+      /* magazine curl progress */
+      --p: 0;
+      --edge: 12px;
     }
     .page:active{ cursor: grabbing; }
 
@@ -365,34 +369,57 @@
       background: rgba(242,193,78,.30);
     }
 
-    /* Realistic flip shading (drag) */
+    /* ===== Magazine-like page curl ===== */
     .page::after{
       content:"";
       position:absolute;
       inset:0;
       border-radius: var(--page-radius);
       pointer-events:none;
-      opacity:0;
-      transition: opacity 180ms ease;
-      background: linear-gradient(90deg,
-        rgba(0,0,0,.55) 0%,
-        rgba(0,0,0,.15) 18%,
-        rgba(0,0,0,0) 45%,
-        rgba(0,0,0,.18) 72%,
-        rgba(0,0,0,.58) 100%);
+      opacity: 1;
+      background:
+        radial-gradient(600px 400px at 85% 50%,
+          rgba(0,0,0, calc(.55 * var(--p))) 0%,
+          rgba(0,0,0, 0) 55%),
+        linear-gradient(90deg,
+          rgba(0,0,0, calc(.10 + .25*var(--p))) 0%,
+          rgba(0,0,0, 0) 45%,
+          rgba(0,0,0, calc(.12 + .40*var(--p))) 100%);
+      mix-blend-mode: multiply;
+      transition: opacity 120ms ease;
     }
-    .page.is-dragging::after{ opacity:.55; }
 
     .page .front::before,
     .page .back::before{
       content:"";
       position:absolute;
       top:0; bottom:0;
-      width: 28px;
-      left:0;
+      right:0;
+      width: calc(var(--edge) + 30px);
       pointer-events:none;
-      background: linear-gradient(90deg, rgba(255,255,255,.10), rgba(255,255,255,0));
-      opacity:.35;
+      border-radius: 0 var(--page-radius) var(--page-radius) 0;
+      background:
+        linear-gradient(90deg,
+          rgba(0,0,0,0) 0%,
+          rgba(255,255,255, calc(.04 + .18*var(--p))) 35%,
+          rgba(255,255,255, calc(.02 + .10*var(--p))) 55%,
+          rgba(0,0,0, calc(.10 + .55*var(--p))) 78%,
+          rgba(0,0,0, calc(.18 + .70*var(--p))) 100%);
+      opacity: 1;
+    }
+
+    .page .front::after,
+    .page .back::after{
+      content:"";
+      position:absolute;
+      top:0; bottom:0;
+      left: 10px;
+      width: 50px;
+      pointer-events:none;
+      background: linear-gradient(90deg,
+        rgba(0,0,0, calc(.14*var(--p))) 0%,
+        rgba(0,0,0, 0) 70%);
+      opacity: 1;
     }
 
     .page.is-dragging{
@@ -460,7 +487,7 @@
           id: "cover",
           badge: { me: "Dobro došli", en: "Welcome" },
           title: { me: "Meni", en: "Menu" },
-          subtitle: { me: "Prevuci stranicu — možeš je zadržati na pola", en: "Drag the page — you can hold it halfway" },
+          subtitle: { me: "Prevuci stranicu — efekat kao časopis", en: "Drag the page — magazine-like flip" },
           items: [
             { name: { me: "Radno vrijeme", en: "Opening hours" }, desc: { me: "Pon–Ned: 08:00–23:00", en: "Mon–Sun: 08:00–23:00" }, price: "" },
             { name: { me: "Wi-Fi", en: "Wi-Fi" }, desc: { me: "Mreža: Vukova • Lozinka: coffee", en: "Network: Vukova • Pass: coffee" }, price: "" },
@@ -692,7 +719,7 @@
     langME.addEventListener('click', () => setLang('me'));
     langEN.addEventListener('click', () => setLang('en'));
 
-    // --- Realistic drag-to-flip (hold halfway) ---
+    // --- Magazine-like drag-to-flip (hold halfway) ---
     let dragging = false;
     let dragPage = null;
     let dragIndex = -1;
@@ -707,25 +734,31 @@
     }
 
     function setPageAngle(pageEl, angle){
-      pageEl.style.transform = `rotateY(${angle}deg)`;
+      // angle: 0 .. -180
+      const p = Math.min(1, Math.max(0, Math.abs(angle) / 180)); // 0..1 progress
+
+      // magazine "warp": tiny z-tilt + slide + lift
+      const zTilt = (p - 0.5) * 2 * 2.2;        // -2.2deg .. +2.2deg
+      const slide = p * 10;                     // 0..10px
+      const lift  = Math.sin(p * Math.PI) * 3;  // 0..3px..0
+
+      pageEl.style.setProperty('--p', String(p));
+      pageEl.style.transform =
+        `translateY(${-lift}px) translateX(${slide}px) rotateZ(${zTilt}deg) rotateY(${angle}deg)`;
     }
 
     function getTopInteractivePage(clientX){
       const rect = book.getBoundingClientRect();
       const relX = clientX - rect.left;
 
-      // Right side: flip forward current pageIndex
       if (relX > rect.width * 0.52) {
         if (pageIndex >= MENU.pages.length - 1) return null;
-        return { idx: pageIndex, dir: "forward" };
+        return { idx: pageIndex };
       }
-      // Left side: flip backward previous page (pageIndex-1)
       if (relX < rect.width * 0.48) {
         if (pageIndex <= 0) return null;
-        return { idx: pageIndex - 1, dir: "backward" };
+        return { idx: pageIndex - 1 };
       }
-
-      // Near spine: ignore
       return null;
     }
 
@@ -762,7 +795,6 @@
       // Full width drag ≈ 180deg
       const degPerPx = 180 / rect.width;
       let angle = startAngle + (-dx * degPerPx);
-
       angle = clamp(angle, -180, 0);
 
       currentAngle = angle;
@@ -776,14 +808,11 @@
 
       const threshold = -90;
       const shouldFlip = currentAngle < threshold;
-
       const wasFlipped = (dragIndex < pageIndex);
 
       if (!wasFlipped) {
-        // forward flip (dragging current page)
         if (shouldFlip) pageIndex = Math.min(pageIndex + 1, MENU.pages.length - 1);
       } else {
-        // backward flip (dragging previous page back)
         if (!shouldFlip) pageIndex = Math.max(pageIndex - 1, 0);
       }
 
@@ -791,7 +820,10 @@
       updateDots();
       updateStatus();
 
+      // reset inline transform so snapped state is clean
       dragPage.style.transform = "";
+      dragPage.style.setProperty('--p', '0');
+
       dragPage = null;
       dragIndex = -1;
       dragging = false;
@@ -802,6 +834,7 @@
       if (dragPage){
         dragPage.classList.remove("is-dragging");
         dragPage.style.transform = "";
+        dragPage.style.setProperty('--p', '0');
       }
       dragPage = null;
       dragIndex = -1;
@@ -810,7 +843,6 @@
       updateStatus();
     }
 
-    // Attach pointer events
     book.addEventListener("pointerdown", onPointerDown, { passive: false });
     window.addEventListener("pointermove", onPointerMove, { passive: true });
     window.addEventListener("pointerup", () => { if (dragging) finishDrag(); }, { passive: true });
