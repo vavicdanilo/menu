@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Restoran | Meni (Flipbook)</title>
+  <title>Vukova svaštara | Meni (Flipbook)</title>
   <meta name="description" content="Moderan restoranski meni na engleskom i crnogorskom, sa flipbook animacijom." />
 
   <style>
@@ -197,7 +197,9 @@
       transform-origin: left center;
       transition: transform var(--flip-dur) cubic-bezier(.2,.8,.2,1);
       will-change: transform;
+      cursor: grab;
     }
+    .page:active{ cursor: grabbing; }
 
     .page .front,
     .page .back{
@@ -363,6 +365,40 @@
       background: rgba(242,193,78,.30);
     }
 
+    /* Realistic flip shading (drag) */
+    .page::after{
+      content:"";
+      position:absolute;
+      inset:0;
+      border-radius: var(--page-radius);
+      pointer-events:none;
+      opacity:0;
+      transition: opacity 180ms ease;
+      background: linear-gradient(90deg,
+        rgba(0,0,0,.55) 0%,
+        rgba(0,0,0,.15) 18%,
+        rgba(0,0,0,0) 45%,
+        rgba(0,0,0,.18) 72%,
+        rgba(0,0,0,.58) 100%);
+    }
+    .page.is-dragging::after{ opacity:.55; }
+
+    .page .front::before,
+    .page .back::before{
+      content:"";
+      position:absolute;
+      top:0; bottom:0;
+      width: 28px;
+      left:0;
+      pointer-events:none;
+      background: linear-gradient(90deg, rgba(255,255,255,.10), rgba(255,255,255,0));
+      opacity:.35;
+    }
+
+    .page.is-dragging{
+      transition: none !important;
+    }
+
     /* Mobile tweaks */
     @media (max-width: 720px){
       header{ align-items:stretch; }
@@ -424,13 +460,13 @@
           id: "cover",
           badge: { me: "Dobro došli", en: "Welcome" },
           title: { me: "Meni", en: "Menu" },
-          subtitle: { me: "Dodirni lijevo/desno ili prevuci da listaš", en: "Tap left/right or swipe to flip" },
+          subtitle: { me: "Prevuci stranicu — možeš je zadržati na pola", en: "Drag the page — you can hold it halfway" },
           items: [
             { name: { me: "Radno vrijeme", en: "Opening hours" }, desc: { me: "Pon–Ned: 08:00–23:00", en: "Mon–Sun: 08:00–23:00" }, price: "" },
-            { name: { me: "Wi-Fi", en: "Wi-Fi" }, desc: { me: "Mreža: Kumbor • Lozinka: coffee", en: "Network: Kumbor • Pass: coffee" }, price: "" },
+            { name: { me: "Wi-Fi", en: "Wi-Fi" }, desc: { me: "Mreža: Vukova • Lozinka: coffee", en: "Network: Vukova • Pass: coffee" }, price: "" },
             { name: { me: "Alergeni", en: "Allergens" }, desc: { me: "Pitajte osoblje za listu alergena.", en: "Ask our staff for the allergen list." }, price: "" },
           ],
-          footer: { me: "Hvala što ste svratili ", en: "Thanks for visiting " }
+          footer: { me: "Hvala što ste svratili 💛", en: "Thanks for visiting 💛" }
         },
         {
           id: "breakfast",
@@ -439,7 +475,7 @@
           subtitle: { me: "Svježe, lagano i brzo", en: "Fresh, light & quick" },
           items: [
             { name: { me: "Avokado tost", en: "Avocado toast" }, desc: { me: "Hljeb od kiselog tijesta, avokado, limeta, čili", en: "Sourdough, avocado, lime, chili" }, price: "6.50€" },
-            { name: { me: "Omlet Aurora", en: "Aurora omelet" }, desc: { me: "Jaja, feta, spanać, cherry paradajz", en: "Eggs, feta, spinach, cherry tomatoes" }, price: "7.20€" },
+            { name: { me: "Omlet kuće", en: "House omelet" }, desc: { me: "Jaja, feta, spanać, cherry paradajz", en: "Eggs, feta, spinach, cherry tomatoes" }, price: "7.20€" },
             { name: { me: "Granola bowl", en: "Granola bowl" }, desc: { me: "Jogurt, granola, med, bobičasto voće", en: "Yogurt, granola, honey, berries" }, price: "5.80€" },
           ],
           footer: { me: "Doručak se služi do 12:00", en: "Breakfast served until 12:00" }
@@ -532,8 +568,7 @@
     function renderPages(){
       book.querySelectorAll('.page').forEach(p => p.remove());
 
-      const pages = MENU.pages;
-      pages.forEach((p, i) => {
+      MENU.pages.forEach((p, i) => {
         const page = el('div', { class: 'page', 'data-index': String(i), 'aria-label': `Page ${i+1}`});
 
         const front = el('div', { class: 'front' }, [
@@ -606,14 +641,14 @@
             el('div', {}, [
               el('h4', {}, [lang==='me' ? 'Savjet' : 'Tip']),
               el('p', {}, [lang==='me'
-                ? 'Dodirni desnu stranu knjige ili prevuci lijevo.'
-                : 'Tap the right side or swipe left.'])
+                ? 'Prevuci stranicu i pusti preko pola da se okrene.'
+                : 'Drag the page; release past halfway to flip.'])
             ]),
             el('div', { class: 'price' }, [''])
           ])
         ]),
         el('div', { class: 'foot' }, [
-          el('span', {}, ['© ' + new Date().getFullYear() + ' Aurora']),
+          el('span', {}, ['© ' + new Date().getFullYear() + ' Vukova svaštara']),
           el('span', {}, [''])
         ])
       ]);
@@ -642,23 +677,6 @@
       });
     }
 
-    function goNext(){
-      const total = MENU.pages.length;
-      if (pageIndex >= total - 1) return;
-      pageIndex++;
-      syncFlipState();
-      updateDots();
-      updateStatus();
-    }
-
-    function goPrev(){
-      if (pageIndex <= 0) return;
-      pageIndex--;
-      syncFlipState();
-      updateDots();
-      updateStatus();
-    }
-
     // Language switch
     function setLang(newLang){
       lang = newLang;
@@ -674,7 +692,131 @@
     langME.addEventListener('click', () => setLang('me'));
     langEN.addEventListener('click', () => setLang('en'));
 
-    // Touch / swipe
+    // --- Realistic drag-to-flip (hold halfway) ---
+    let dragging = false;
+    let dragPage = null;
+    let dragIndex = -1;
+    let startX = 0;
+    let startAngle = 0;
+    let currentAngle = 0;
+
+    function clamp(v, a, b){ return Math.max(a, Math.min(b, v)); }
+
+    function baseAngleForIndex(i){
+      return (i < pageIndex) ? -180 : 0;
+    }
+
+    function setPageAngle(pageEl, angle){
+      pageEl.style.transform = `rotateY(${angle}deg)`;
+    }
+
+    function getTopInteractivePage(clientX){
+      const rect = book.getBoundingClientRect();
+      const relX = clientX - rect.left;
+
+      // Right side: flip forward current pageIndex
+      if (relX > rect.width * 0.52) {
+        if (pageIndex >= MENU.pages.length - 1) return null;
+        return { idx: pageIndex, dir: "forward" };
+      }
+      // Left side: flip backward previous page (pageIndex-1)
+      if (relX < rect.width * 0.48) {
+        if (pageIndex <= 0) return null;
+        return { idx: pageIndex - 1, dir: "backward" };
+      }
+
+      // Near spine: ignore
+      return null;
+    }
+
+    function onPointerDown(e){
+      if (e.pointerType === "mouse" && e.button !== 0) return;
+
+      const target = getTopInteractivePage(e.clientX);
+      if (!target) return;
+
+      dragging = true;
+      dragIndex = target.idx;
+
+      dragPage = book.querySelector(`.page[data-index="${dragIndex}"]`);
+      if (!dragPage) return;
+
+      dragPage.classList.add("is-dragging");
+
+      try { book.setPointerCapture(e.pointerId); } catch(_) {}
+
+      startX = e.clientX;
+      startAngle = baseAngleForIndex(dragIndex);
+      currentAngle = startAngle;
+
+      setPageAngle(dragPage, startAngle);
+      e.preventDefault();
+    }
+
+    function onPointerMove(e){
+      if (!dragging || !dragPage) return;
+
+      const rect = book.getBoundingClientRect();
+      const dx = e.clientX - startX;
+
+      // Full width drag ≈ 180deg
+      const degPerPx = 180 / rect.width;
+      let angle = startAngle + (-dx * degPerPx);
+
+      angle = clamp(angle, -180, 0);
+
+      currentAngle = angle;
+      setPageAngle(dragPage, angle);
+    }
+
+    function finishDrag(){
+      if (!dragPage) return;
+
+      dragPage.classList.remove("is-dragging");
+
+      const threshold = -90;
+      const shouldFlip = currentAngle < threshold;
+
+      const wasFlipped = (dragIndex < pageIndex);
+
+      if (!wasFlipped) {
+        // forward flip (dragging current page)
+        if (shouldFlip) pageIndex = Math.min(pageIndex + 1, MENU.pages.length - 1);
+      } else {
+        // backward flip (dragging previous page back)
+        if (!shouldFlip) pageIndex = Math.max(pageIndex - 1, 0);
+      }
+
+      syncFlipState();
+      updateDots();
+      updateStatus();
+
+      dragPage.style.transform = "";
+      dragPage = null;
+      dragIndex = -1;
+      dragging = false;
+    }
+
+    function cancelDrag(){
+      dragging = false;
+      if (dragPage){
+        dragPage.classList.remove("is-dragging");
+        dragPage.style.transform = "";
+      }
+      dragPage = null;
+      dragIndex = -1;
+      syncFlipState();
+      updateDots();
+      updateStatus();
+    }
+
+    // Attach pointer events
+    book.addEventListener("pointerdown", onPointerDown, { passive: false });
+    window.addEventListener("pointermove", onPointerMove, { passive: true });
+    window.addEventListener("pointerup", () => { if (dragging) finishDrag(); }, { passive: true });
+    window.addEventListener("pointercancel", () => { if (dragging) cancelDrag(); }, { passive: true });
+
+    // Swipe fallback (quick flip)
     let touchStartX = 0;
     let touchStartY = 0;
     let touching = false;
@@ -697,26 +839,18 @@
       const dy = t.clientY - touchStartY;
 
       if (Math.abs(dx) > 48 && Math.abs(dy) < 60) {
-        if (dx < 0) goNext();
-        else goPrev();
+        if (dx < 0) pageIndex = Math.min(pageIndex + 1, MENU.pages.length - 1);
+        else pageIndex = Math.max(pageIndex - 1, 0);
+
+        syncFlipState();
+        updateDots();
+        updateStatus();
       }
     }, { passive: true });
 
     // Init
     setBrand();
     renderPages();
-
-    // Tap left/right half to flip
-    book.addEventListener('click', (e) => {
-      const rect = book.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      if (x > rect.width * 0.56) goNext();
-      else if (x < rect.width * 0.44) goPrev();
-    });
   </script>
 </body>
 </html>
-
-
-
-
